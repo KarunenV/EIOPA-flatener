@@ -13,7 +13,7 @@ currency_map = {
 }
 
 rows = []
-
+seen_keys = set()  # ✅ track (Curve, Currency, Date)
 for xlsx_path in sorted(input_dir.glob("*.xlsx")):
     print("Loading", xlsx_path.name)
     excel = pd.ExcelFile(xlsx_path, engine="openpyxl")
@@ -44,9 +44,18 @@ for xlsx_path in sorted(input_dir.glob("*.xlsx")):
 
         # For each column (skipping first column), each value is one output row
         for col in df.columns[1:]:
-            date_value = col
+            date_value = col          
+
+            row_key = (curve_type, currency, date_value)
+
+            # ✅ skip whole column if already seen
+            if row_key in seen_keys:
+                continue
+
+            seen_keys.add(row_key)
 
             tenor = 1
+
             for cell in df[col][8:]:  # skip first 9 rows which are not data
                 if pd.isna(cell):
                     tenor += 1
